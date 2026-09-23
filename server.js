@@ -6,7 +6,7 @@ const path = require('path');
 const fetch = require('node-fetch');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'data', 'radio.db');
 
 // Ensure data directory exists
