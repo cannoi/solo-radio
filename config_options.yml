@@ -1,0 +1,7 @@
+title: "Solo Radio"
+eyebrow: SoloHost App
+description: "tạo cho tôi ứng dụng nghe radio"
+footer_hint: Ready to run on Pi Desktop SoloHost.
+output_file: .env
+after_save: Saved. Start the app from SoloHost.
+fields: []

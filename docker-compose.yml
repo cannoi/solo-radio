@@ -1,0 +1,8 @@
+services:
+  app:
+    image: paf-app:solo-radio
+    restart: unless-stopped
+    labels:
+      pi.ui.primary: "true"
+    ports:
+      - "127.0.0.1:18080:8080"

@@ -1,0 +1,18 @@
+{
+  "name": "solo-radio",
+  "version": "1.0.0",
+  "description": "Ứng dụng nghe đài phát thanh trực tuyến gọn nhẹ với Radio Browser API và quản lý đài yêu thích",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "sqlite3": "^5.1.7",
+    "node-fetch": "^2.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

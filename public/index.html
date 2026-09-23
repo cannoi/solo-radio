@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solo Radio — Nghe Đài Trực Tuyến</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>.paf-made-by{position:fixed;right:8px;bottom:8px;width:min(72px,12vw);max-width:12vw;height:auto;object-fit:contain;opacity:.5;background:transparent;padding:0;border:0;box-shadow:none;filter:none;pointer-events:none;z-index:30}</style></head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Top Navigation -->
+  <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700 sticky top-0 z-30">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+          <i class="fa-solid fa-radio text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg tracking-wide">Solo Radio</h1>
+          <p class="text-xs text-slate-400">Đài phát thanh trực tuyến & Toàn cầu</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-2">
+        <button onclick="openAddModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center space-x-1.5">
+          <i class="fa-solid fa-plus"></i>
+          <span class="hidden sm:inline">Thêm đài</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-5xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+    <!-- Search & Tabs -->
+    <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div class="flex space-x-2 w-full sm:w-auto">
+        <button onclick="switchTab('local')" id="btn-tab-local" class="px-4 py-2 rounded-lg font-medium text-sm transition bg-amber-600 text-white">
+          <i class="fa-solid fa-star mr-1.5"></i> Gợi ý & Yêu thích
+        </button>
+        <button onclick="switchTab('global')" id="btn-tab-global" class="px-4 py-2 rounded-lg font-medium text-sm transition bg-slate-800 text-slate-300 hover:bg-slate-700">
+          <i class="fa-solid fa-globe mr-1.5"></i> Tìm toàn cầu
+        </button>
+      </div>
+      
+      <div class="relative w-full sm:w-72">
+        <input type="text" id="search-input" placeholder="Tìm kiếm tên đài, quốc gia..." class="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500" onkeyup="handleSearch(event)">
+        <i class="fa-solid fa-search absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+      </div>
+    </div>
+
+    <!-- Tab 1: Local Stations & Favorites -->
+    <div id="tab-local" class="space-y-6">
+      <div>
+        <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">Danh sách kênh & Đã lưu</h2>
+        <div id="stations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Station Cards injected here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Global Radio Browser -->
+    <div id="tab-global" class="space-y-6 hidden">
+      <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/60 flex flex-col sm:flex-row gap-3">
+        <input type="text" id="global-search-name" placeholder="Tên đài (VD: BBC, Jazz...)" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+        <input type="text" id="global-search-country" placeholder="Quốc gia (VD: Vietnam, United States...)" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500">
+        <button onclick="searchGlobalStations()" class="bg-amber-600 hover:bg-amber-500 text-white px-5 py-2 rounded-lg text-sm font-medium transition">
+          <i class="fa-solid fa-search mr-1"></i> Tìm kiếm
+        </button>
+      </div>
+      <div id="global-stations-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Global search results -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Sticky Audio Player Bar -->
+  <div class="bg-slate-800 border-t border-slate-700 sticky bottom-0 z-40 shadow-2xl">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+      
+      <!-- Station Info -->
+      <div class="flex items-center space-x-3 w-full md:w-1/3">
+        <div class="w-12 h-12 rounded-lg bg-slate-700 flex items-center justify-center overflow-hidden shrink-0 border border-slate-600">
+          <img id="player-favicon" src="" alt="" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2364748b\'><path d=\'M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z\'/></svg>'">
+        </div>
+        <div class="overflow-hidden">
+          <h3 id="player-name" class="font-medium text-sm truncate text-slate-100">Chọn một đài để nghe</h3>
+          <p id="player-meta" class="text-xs text-slate-400 truncate">Trạng thái: Đang dừng</p>
+        </div>
+      </div>
+
+      <!-- Controls & Player Core -->
+      <div class="flex items-center space-x-4">
+        <button onclick="togglePlay()" id="play-btn" class="w-12 h-12 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-900 flex items-center justify-center shadow-lg shadow-amber-500/30 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+          <i id="play-icon" class="fa-solid fa-play text-lg"></i>
+        </button>
+        <div class="flex items-center space-x-2 bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-700">
+          <i class="fa-solid fa-volume-high text-slate-400 text-xs"></i>
+          <input type="range" min="0" max="1" step="0.05" value="1" onchange="setVolume(this.value)" class="w-20 accent-amber-500">
+        </div>
+      </div>
+
+      <!-- Sleep Timer & Extra -->
+      <div class="flex items-center space-x-3 w-full md:w-1/3 justify-end">
+        <div class="flex items-center space-x-2 bg-slate-900/60 px-3 py-1.5 rounded-lg border border-slate-700">
+          <i class="fa-solid fa-clock text-amber-500 text-xs"></i>
+          <select id="sleep-timer-select" onchange="setSleepTimer(this.value)" class="bg-transparent text-xs text-slate-300 focus:outline-none">
+            <option value="0">Hẹn giờ tắt: Tắt</option>
+            <option value="15">15 phút</option>
+            <option value="30">30 phút</option>
+            <option value="60">60 phút</option>
+          </select>
+        </div>
+        <span id="timer-countdown" class="text-xs text-amber-400 font-mono"></span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Add Station Modal -->
+  <div id="add-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-lg">Thêm đài phát thanh thủ công</h3>
+        <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-200"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form onsubmit="submitCustomStation(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Tên đài phát *</label>
+          <input type="text" id="custom-name" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500" placeholder="VD: Radio Nhạc Trẻ">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Đường dẫn luồng (Stream URL) *</label>
+          <input type="url" id="custom-url" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500" placeholder="https://...">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Quốc gia / Thể loại</label>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="custom-country" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500" placeholder="Vietnam">
+            <input type="text" id="custom-tags" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-amber-500" placeholder="music,pop">
+          </div>
+        </div>
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" onclick="closeAddModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-600 font-medium">Hủy</button>
+          <button type="submit" class="px-4 py-2 rounded-lg text-sm bg-amber-600 hover:bg-amber-500 font-medium text-white">Lưu đài phát</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Hidden Audio Element -->
+  <audio id="audio-element"></audio>
+
+  <!-- Footer -->
+  <footer class="py-4 text-center text-xs text-slate-500 border-t border-slate-800">
+    Solo Radio — Made with App Builder — Pi SoloHost
+  </footer>
+
+  <script>
+    let allStations = [];
+    let favorites = [];
+    let currentStation = null;
+    let isPlaying = false;
+    let sleepTimerInterval = null;
+    let sleepTimerSeconds = 0;
+
+    const audioElement = document.getElementById('audio-element');
+    const playBtn = document.getElementById('play-btn');
+    const playIcon = document.getElementById('play-icon');
+
+    async function loadStations(search = '') {
+      try {
+        const res = await fetch(`/api/stations?search=${encodeURIComponent(search)}`);
+        allStations = await res.json();
+        const favRes = await fetch('/api/favorites');
+        favorites = await favRes.json();
+        renderStations();
+      } catch (e) {
+        console.error('Failed to load stations', e);
+      }
+    }
+
+    function renderStations() {
+      const grid = document.getElementById('stations-grid');
+      const favIds = favorites.map(f => f.station_id);
+      
+      if (allStations.length === 0) {
+        grid.innerHTML = '<div class="col-span-full text-center py-10 text-slate-500">Không tìm thấy đài phát nào.</div>';
+        return;
+      }
+
+      grid.innerHTML = allStations.map(s => {
+        const isFav = favIds.includes(s.id);
+        return `
+          <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-amber-500/50 transition shadow-md">
+            <div>
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 rounded-lg bg-slate-700 overflow-hidden shrink-0 flex items-center justify-center border border-slate-600">
+                    <img src="${s.favicon || ''}" alt="" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2364748b\'><path d=\'M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z\'/></svg>'">
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-sm text-slate-200 line-clamp-1">${s.name}</h3>
+                    <p class="text-xs text-slate-400">${s.country || 'Global'} ${s.tags ? '• ' + s.tags : ''}</p>
+                  </div>
+                </div>
+                <button onclick="toggleFavorite(${s.id})" class="text-slate-400 hover:text-amber-400 transition text-base">
+                  <i class="${isFav ? 'fa-solid text-amber-500' : 'fa-regular'} fa-star"></i>
+                </button>
+              </div>
+            </div>
+            <div class="pt-3 border-t border-slate-700/60 flex items-center justify-between mt-2">
+              <span class="text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded bg-slate-700 text-slate-300">${s.is_custom ? 'Tùy chỉnh' : 'Trực tiếp'}</span>
+              <button onclick="playStation('${s.name}', '${s.stream_url}', '${s.favicon || ''}')" class="bg-amber-600/20 hover:bg-amber-600 text-amber-400 hover:text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-play"></i>
+                <span>Nghe ngay</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function playStation(name, url, favicon) {
+      currentStation = { name, url, favicon };
+      document.getElementById('player-name').innerText = name;
+      document.getElementById('player-meta').innerText = 'Đang kết nối...';
+      document.getElementById('player-favicon').src = favicon;
+      
+      audioElement.src = url;
+      audioElement.load();
+      audioElement.play().then(() => {
+        isPlaying = true;
+        updatePlayButton();
+        document.getElementById('player-meta').innerText = 'Đang phát trực tiếp';
+        playBtn.disabled = false;
+      }).catch(err => {
+        console.error(err);
+        document.getElementById('player-meta').innerText = 'Lỗi kết nối luồng stream';
+        playBtn.disabled = false;
+      });
+    }
+
+    function togglePlay() {
+      if (!currentStation) return;
+      if (isPlaying) {
+        audioElement.pause();
+        isPlaying = false;
+        document.getElementById('player-meta').innerText = 'Đã tạm dừng';
+      } else {
+        audioElement.play().then(() => {
+          isPlaying = true;
+          document.getElementById('player-meta').innerText = 'Đang phát trực tiếp';
+        });
+      }
+      updatePlayButton();
+    }
+
+    function updatePlayButton() {
+      if (isPlaying) {
+        playIcon.className = 'fa-solid fa-pause text-lg';
+      } else {
+        playIcon.className = 'fa-solid fa-play text-lg';
+      }
+    }
+
+    function setVolume(val) {
+      audioElement.volume = val;
+    }
+
+    async function toggleFavorite(stationId) {
+      try {
+        await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ station_id: stationId })
+        });
+        const favRes = await fetch('/api/favorites');
+        favorites = await favRes.json();
+        renderStations();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function searchGlobalStations() {
+      const name = document.getElementById('global-search-name').value;
+      const country = document.getElementById('global-search-country').value;
+      const grid = document.getElementById('global-stations-grid');
+      grid.innerHTML = '<div class="col-span-full text-center py-10 text-slate-400">Đang tìm kiếm toàn cầu...</div>';
+
+      try {
+        const res = await fetch(`/api/radio-browser/search?name=${encodeURIComponent(name)}&country=${encodeURIComponent(country)}`);
+        const stations = await res.json();
+        
+        if (stations.length === 0) {
+          grid.innerHTML = '<div class="col-span-full text-center py-10 text-slate-500">Không tìm thấy đài phù hợp.</div>';
+          return;
+        }
+
+        grid.innerHTML = stations.map(s => `
+          <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl p-4 flex flex-col justify-between hover:border-amber-500/50 transition shadow-md">
+            <div>
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <div class="flex items-center space-x-3">
+                  <div class="w-10 h-10 rounded-lg bg-slate-700 overflow-hidden shrink-0 flex items-center justify-center border border-slate-600">
+                    <img src="${s.favicon || ''}" alt="" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%2364748b\'><path d=\'M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z\'/></svg>'">
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-sm text-slate-200 line-clamp-1">${s.name}</h3>
+                    <p class="text-xs text-slate-400">${s.country || 'Global'} ${s.tags ? '• ' + s.tags : ''}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="pt-3 border-t border-slate-700/60 flex items-center justify-between mt-2">
+              <button onclick="saveAndPlayGlobal('${s.name}', '${s.stream_url}', '${s.favicon || ''}', '${s.country || ''}', '${s.tags || ''}')" class="w-full bg-amber-600 hover:bg-amber-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition flex items-center justify-center space-x-1.5">
+                <i class="fa-solid fa-play"></i>
+                <span>Lưu & Nghe ngay</span>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        grid.innerHTML = '<div class="col-span-full text-center py-10 text-rose-400">Lỗi kết nối tới Radio Browser API.</div>';
+      }
+    }
+
+    async function saveAndPlayGlobal(name, stream_url, favicon, country, tags) {
+      try {
+        const res = await fetch('/api/stations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, stream_url, favicon, country, tags })
+        });
+        const data = await res.json();
+        await loadStations();
+        playStation(name, stream_url, favicon);
+        switchTab('local');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function switchTab(tab) {
+      const localTab = document.getElementById('tab-local');
+      const globalTab = document.getElementById('tab-global');
+      const btnLocal = document.getElementById('btn-tab-local');
+      const btnGlobal = document.getElementById('btn-tab-global');
+
+      if (tab === 'local') {
+        localTab.classList.remove('hidden');
+        globalTab.classList.add('hidden');
+        btnLocal.className = 'px-4 py-2 rounded-lg font-medium text-sm transition bg-amber-600 text-white';
+        btnGlobal.className = 'px-4 py-2 rounded-lg font-medium text-sm transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+      } else {
+        localTab.classList.add('hidden');
+        globalTab.classList.remove('hidden');
+        btnGlobal.className = 'px-4 py-2 rounded-lg font-medium text-sm transition bg-amber-600 text-white';
+        btnLocal.className = 'px-4 py-2 rounded-lg font-medium text-sm transition bg-slate-800 text-slate-300 hover:bg-slate-700';
+      }
+    }
+
+    function handleSearch(e) {
+      const val = e.target.value;
+      loadStations(val);
+    }
+
+    function openAddModal() {
+      document.getElementById('add-modal').classList.remove('hidden');
+    }
+
+    function closeAddModal() {
+      document.getElementById('add-modal').classList.add('hidden');
+    }
+
+    async function submitCustomStation(e) {
+      e.preventDefault();
+      const name = document.getElementById('custom-name').value;
+      const stream_url = document.getElementById('custom-url').value;
+      const country = document.getElementById('custom-country').value;
+      const tags = document.getElementById('custom-tags').value;
+
+      try {
+        await fetch('/api/stations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, stream_url, country, tags })
+        });
+        closeAddModal();
+        loadStations();
+        e.target.reset();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function setSleepTimer(minutes) {
+      if (sleepTimerInterval) clearInterval(sleepTimerInterval);
+      const mins = parseInt(minutes, 10);
+      if (mins === 0) {
+        sleepTimerSeconds = 0;
+        document.getElementById('timer-countdown').innerText = '';
+        return;
+      }
+      sleepTimerSeconds = mins * 60;
+      sleepTimerInterval = setInterval(() => {
+        sleepTimerSeconds--;
+        const m = Math.floor(sleepTimerSeconds / 60);
+        const s = sleepTimerSeconds % 60;
+        document.getElementById('timer-countdown').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+        if (sleepTimerSeconds <= 0) {
+          clearInterval(sleepTimerInterval);
+          if (audioElement && isPlaying) {
+            audioElement.pause();
+            isPlaying = false;
+            updatePlayButton();
+            document.getElementById('player-meta').innerText = 'Đã hẹn giờ tắt';
+          }
+          document.getElementById('timer-countdown').innerText = '';
+          document.getElementById('sleep-timer-select').value = '0';
+        }
+      }, 1000);
+    }
+
+    // Initial load
+    loadStations();
+  </script>
+<img class="paf-made-by" src="/made-by.png" alt="Made with App Builder — Pi SoloHost"></body>
+</html>
